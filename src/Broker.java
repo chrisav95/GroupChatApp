@@ -4,14 +4,14 @@ import java.util.*;
 import java.io.*;
 import java.net.*;
 import static java.lang.Integer.parseInt;
+import java.math.BigInteger;
 
 public class Broker implements Node{
 
     private static List<String> existingGroups = new ArrayList<String>(); //All existing Groups in the App
 
     HashMap<String, Topic> myTopics = new HashMap<String, Topic>(); //Topics managed by this Broker
-    private List<Consumer> registeredUsers = new ArrayList<>(); //List of the Consumers that have established a connection with this Broker.
-    private List<Publisher> registeredPublisher = new ArrayList<>(); //List of the Publishers that have established a connection with this Broker.
+
 
     private ServerSocket providerSocket; //Broker's server socket, this accepts Consumer queries.
     private int brokerId;
@@ -57,18 +57,22 @@ public class Broker implements Node{
     }
 
     // Initialize broker.
-    public void init(int port) throws UnknownHostException, IOException, NoSuchAlgorithmException {
+    public int init(int port) throws UnknownHostException, IOException, NoSuchAlgorithmException {
 
         brokers.add(this);
 
-        for (String topic : topics){
+        for (String topic : topics)
+        {
             // Calculate topic's hash and `mod` it with the number of spawned brokers.
-            int hash = parseInt(calculateKeys(topic), 16) % 3;
+
+            BigInteger key = new BigInteger(calculateKeys(topic) , 16);
+            int hash = (key.mod(BigInteger.valueOf(3))).intValue();
+            System.out.println(hash); // As decimal...
+            //System.out.println(brokerId);
 
             // If topic belongs to the broker, register it to the topics list.
             if (brokerId == hash){
-                myTopics.put("topic", new Topic(topic));
-
+                myTopics.put(topic, new Topic(topic));   //  !It's OK . Ta topic tou kathe broker mpainoun sto hashmap
             }
 
         }
@@ -84,11 +88,12 @@ public class Broker implements Node{
 
             System.out.println("[BROKER] Connected to a consumer!");
 
-           //Συμφωνα με το LAB2 ό,τι κανει μετα ο server είναι σε ενα thread που παίρνει όρισμα το socket
-            Thread t = new ActionsForUserNode(client);
-            t.start();
+            //Συμφωνα με το LAB2 ό,τι κανει μετα ο server είναι σε ενα thread που παίρνει όρισμα το socket
+            //Thread t = new ActionsForUserNode(client);
+            //t.start();
 
         }
+
 
     }
 
@@ -144,7 +149,7 @@ public class Broker implements Node{
             }
 
  */
-        }
+    }
 
 
 
