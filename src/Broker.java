@@ -15,6 +15,7 @@ public class Broker implements Node{
 
     private ServerSocket providerSocket; //Broker's server socket, this accepts Consumer queries.
     private int brokerId;
+    private int port;
 
     public static void main(String[] args) throws IOException, NoSuchAlgorithmException {
 
@@ -48,7 +49,7 @@ public class Broker implements Node{
         }
         writer.close();
 
-        b.init(port);
+        port = b.init(port);
 
         for (String i : b.myTopics.keySet()) {
             System.out.println(i);
@@ -93,7 +94,6 @@ public class Broker implements Node{
             //t.start();
 
         }
-
 
     }
 
