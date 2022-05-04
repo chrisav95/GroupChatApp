@@ -1,3 +1,4 @@
+import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.*;
@@ -58,9 +59,11 @@ public class Broker implements Node{
 
         b.init(port);
 
+        /*    //  Test HashMap for the topic of this broker      !It's OK
         for (String i : b.mytopics.keySet()) {
             System.out.println(i);
         }
+        */
 
 
 
@@ -73,12 +76,15 @@ public class Broker implements Node{
         for (String topic : topics)
         {
             // Calculate topic's hash and `mod` it with the number of spawned brokers.
-            int hash = parseInt(calculateKeys(topic), 16) % 3;
+
+            BigInteger key = new BigInteger(calculateKeys(topic) , 16);
+            int hash = (key.mod(BigInteger.valueOf(3))).intValue();
+            System.out.println(hash); // As decimal...
+            //System.out.println(brokerId);
 
             // If topic belongs to the broker, register it to the topics list.
             if (brokerId == hash){
-                mytopics.put("topic", new Topic(topic));
-
+                mytopics.put(topic, new Topic(topic));   //  !It's OK . Ta topic tou kathe broker mpainoun sto hashmap
             }
 
         }
@@ -196,9 +202,10 @@ public class Broker implements Node{
 
 
     // Calculate topic's hash and `mod` it with the number of spawned brokers.
-    public String calculateKeys(String input) throws NoSuchAlgorithmException {
+    public String calculateKeys(String value) throws NoSuchAlgorithmException {
+
         MessageDigest mDigest = MessageDigest.getInstance("SHA1");
-        byte[] result = mDigest.digest(input.getBytes());
+        byte[] result = mDigest.digest(value.getBytes());
         StringBuffer sb = new StringBuffer();
         for (int i = 0; i < result.length; i++) {
             sb.append(Integer.toString((result[i] & 0xff) + 0x100, 16).substring(1));
