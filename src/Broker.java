@@ -1,32 +1,25 @@
-import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.*;
 import java.io.*;
 import java.net.*;
-
 import static java.lang.Integer.parseInt;
-import static java.util.Objects.hash;
 
 public class Broker implements Node{
 
-    private static List<String> existingGroups = new ArrayList<String>();
+    private static List<String> existingGroups = new ArrayList<String>(); //All existing Groups in the App
 
-    private List<String> managedGroups = new ArrayList<String>();
-
-    // topic of this broker
-    HashMap<String, Topic> mytopics = new HashMap<String, Topic>();
+    HashMap<String, Topic> myTopics = new HashMap<String, Topic>(); //Topics managed by this Broker
+    private List<Consumer> registeredUsers = new ArrayList<>(); //List of the Consumers that have established a connection with this Broker.
+    private List<Publisher> registeredPublisher = new ArrayList<>(); //List of the Publishers that have established a connection with this Broker.
 
     private ServerSocket providerSocket; //Broker's server socket, this accepts Consumer queries.
-
     private int brokerId;
-
 
     public static void main(String[] args) throws IOException, NoSuchAlgorithmException {
 
         Broker b = new Broker();
         int port;
-
 
         // Reading initBroker.txt
         BufferedReader reader = new BufferedReader(new FileReader("./src/initBroker.txt")); //Reading init file to initialize this broker's port correctly.
@@ -35,6 +28,7 @@ public class Broker implements Node{
         int brokerNumber = parseInt(line);
         b.setBrokerId(brokerNumber); //Setting broker's id, based on the initBroker.txt file.
         reader.close();
+
         BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream("./src/initBroker.txt")));
         if (brokerNumber == 0) { //This means that this is the first broker to be initialized.
             port = FIRSTBROKER;
@@ -54,69 +48,52 @@ public class Broker implements Node{
         }
         writer.close();
 
-
-
-
         b.init(port);
 
-        /*    //  Test HashMap for the topic of this broker      !It's OK
-        for (String i : b.mytopics.keySet()) {
+        for (String i : b.myTopics.keySet()) {
             System.out.println(i);
         }
-        */
-
-
-
 
     }
 
     // Initialize broker.
     public void init(int port) throws UnknownHostException, IOException, NoSuchAlgorithmException {
 
-        for (String topic : topics)
-        {
-            // Calculate topic's hash and `mod` it with the number of spawned brokers.
+        brokers.add(this);
 
-            BigInteger key = new BigInteger(calculateKeys(topic) , 16);
-            int hash = (key.mod(BigInteger.valueOf(3))).intValue();
-            System.out.println(hash); // As decimal...
-            //System.out.println(brokerId);
+        for (String topic : topics){
+            // Calculate topic's hash and `mod` it with the number of spawned brokers.
+            int hash = parseInt(calculateKeys(topic), 16) % 3;
 
             // If topic belongs to the broker, register it to the topics list.
             if (brokerId == hash){
-                mytopics.put(topic, new Topic(topic));   //  !It's OK . Ta topic tou kathe broker mpainoun sto hashmap
+                myTopics.put("topic", new Topic(topic));
+
             }
 
         }
 
 
         // Start listening for connections.
-
         providerSocket = new ServerSocket(port);
         System.out.println("[BROKER] "+ getBrokerId() + " Initializing data.");
 
-
-        while(true) {               //Accepting Consumer queries.
+        while(true) {       //Accepting Consumer queries.
             System.out.println("[BROKER] Waiting for userNode connection.");
             Socket client = providerSocket.accept();
 
             System.out.println("[BROKER] Connected to a consumer!");
 
-
            //Συμφωνα με το LAB2 ό,τι κανει μετα ο server είναι σε ενα thread που παίρνει όρισμα το socket
-            Thread t = new ActionsForUSerNode(client);
+            Thread t = new ActionsForUserNode(client);
             t.start();
 
         }
 
-
-
     }
 
 
-
-
-    private class ActionsForUSerNode extends Thread {
+    private class ActionsForUserNode extends Thread {
 
         //Sockets for consumer and publisher, I/O streams, reader/writers.
         private Socket connection;
@@ -129,9 +106,7 @@ public class Broker implements Node{
         private ObjectOutputStream outC;
         private PrintWriter publisherWriter;
 
-
-
-        public ActionsForUSerNode(Socket socket) {
+        public ActionsForUserNode(Socket socket) {
             this.connection = socket;
         }
 /*
@@ -176,7 +151,7 @@ public class Broker implements Node{
 
 
     public List<Broker> getBrokers() {
-        return null;
+        return brokers;
     }
 
     public void connect() {
@@ -200,12 +175,10 @@ public class Broker implements Node{
     }
 
 
-
     // Calculate topic's hash and `mod` it with the number of spawned brokers.
-    public String calculateKeys(String value) throws NoSuchAlgorithmException {
-
+    public String calculateKeys(String input) throws NoSuchAlgorithmException {
         MessageDigest mDigest = MessageDigest.getInstance("SHA1");
-        byte[] result = mDigest.digest(value.getBytes());
+        byte[] result = mDigest.digest(input.getBytes());
         StringBuffer sb = new StringBuffer();
         for (int i = 0; i < result.length; i++) {
             sb.append(Integer.toString((result[i] & 0xff) + 0x100, 16).substring(1));
