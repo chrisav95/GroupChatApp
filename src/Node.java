@@ -1,3 +1,4 @@
+import java.security.NoSuchAlgorithmException;
 import java.util.*;
 import java.io.*;
 import java.net.*;
@@ -18,7 +19,9 @@ public interface Node {
     public static final int THIRDBROKER = 5984;
     public static List<Broker> brokers = new ArrayList<>();
 
-    public void init(int port) throws UnknownHostException, IOException;
+    public static final List<String> topics = Arrays.asList("topic1", "topic2", "topic3", "topic4", "topic5");
+
+    public void init(int port) throws UnknownHostException, IOException, NoSuchAlgorithmException;
 
     public List<Broker> getBrokers();
 
