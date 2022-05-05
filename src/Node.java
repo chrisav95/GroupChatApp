@@ -19,6 +19,7 @@ public interface Node {
     public static final int THIRDBROKER = 5984;
     public static List<Broker> brokers = new ArrayList<>();
 
+    //All existing Groups in the App
     public static final List<String> topics = Arrays.asList("topic1", "topic2", "topic3", "topic4", "topic5");
 
     public int init(int port) throws UnknownHostException, IOException, NoSuchAlgorithmException;

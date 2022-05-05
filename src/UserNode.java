@@ -3,9 +3,8 @@ import java.net.UnknownHostException;
 import java.util.*;
 import java.io.*;
 
-
 //https://stackoverflow.com/questions/61639703/read-and-write-object-on-a-socket-java
-//  For pass an object with a socket, the class and the package needs to be the same, and then you need to set the same serialVersionUID
+// For pass an object with a socket, the class and the package needs to be the same, and then you need to set the same serialVersionUID
 
 
 public class UserNode implements Node{

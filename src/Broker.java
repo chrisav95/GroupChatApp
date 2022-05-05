@@ -5,87 +5,100 @@ import java.io.*;
 import java.net.*;
 import static java.lang.Integer.parseInt;
 import java.math.BigInteger;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class Broker implements Node{
 
-    private static List<String> existingGroups = new ArrayList<String>(); //All existing Groups in the App
-
     HashMap<String, Topic> myTopics = new HashMap<String, Topic>(); //Topics managed by this Broker
 
-
+    private ExecutorService pool = Executors.newFixedThreadPool(100); //Broker thread pool.
     private ServerSocket providerSocket; //Broker's server socket, this accepts Consumer queries.
     private int brokerId;
     private int port;
 
+    public Broker(){}
+
+    public Broker(int id){
+        this.brokerId = id;
+        if (id == 0) this.port = FIRSTBROKER;
+        if (id == 1) this.port = SECONDBROKER;
+        if (id == 2) this.port = THIRDBROKER;
+
+    }
+
     public static void main(String[] args) throws IOException, NoSuchAlgorithmException {
 
-        Broker b = new Broker();
-        int port;
+        Broker b;
+        initBrokers();
 
         // Reading initBroker.txt
         BufferedReader reader = new BufferedReader(new FileReader("./src/initBroker.txt")); //Reading init file to initialize this broker's port correctly.
         String line;
         line = reader.readLine();
         int brokerNumber = parseInt(line);
-        b.setBrokerId(brokerNumber); //Setting broker's id, based on the initBroker.txt file.
+
         reader.close();
 
+        //Updating the txt file with the current broker
         BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream("./src/initBroker.txt")));
         if (brokerNumber == 0) { //This means that this is the first broker to be initialized.
-            port = FIRSTBROKER;
-            brokerNumber++; //Increasing the counter of running brokers.
-            System.out.println("Broker Number " + brokerNumber + " with port " + port );
+            b = brokers.get(0);
+            brokerNumber++;
+            System.out.println("Broker Number " + brokerNumber + " with port " + b.port );
             writer.write(String.valueOf(brokerNumber)); //Refreshing init file.
         } else if (brokerNumber == 1) {
-            port = SECONDBROKER;
+            b = brokers.get(1);
             brokerNumber++;
-            System.out.println("Broker Number " + brokerNumber + " with port " + port );
+            System.out.println("Broker Number " + brokerNumber + " with port " + b.port );
             writer.write(String.valueOf(brokerNumber));
         } else {
-            port = THIRDBROKER;
-            System.out.println("Broker Number 3 with port " + port );
+            b = brokers.get(2);
+            System.out.println("Broker Number 3 with port " + b.port );
             brokerNumber = 0; //When we initialize the third broker we reset the counter to 0.
             writer.write(String.valueOf(brokerNumber));
         }
         writer.close();
 
-        port = b.init(port);
-
-        for (String i : b.myTopics.keySet()) {
-            System.out.println(i);
-        }
+        b.init(b.port);
 
     }
 
     // Initialize broker.
     public int init(int port) throws UnknownHostException, IOException, NoSuchAlgorithmException {
 
-        brokers.add(this);
-
         for (String topic : topics)
         {
             // Calculate topic's hash and `mod` it with the number of spawned brokers.
-
             BigInteger key = new BigInteger(calculateKeys(topic) , 16);
             int hash = (key.mod(BigInteger.valueOf(3))).intValue();
-            System.out.println(hash); // As decimal...
+            //System.out.println(hash); // As decimal...
             //System.out.println(brokerId);
 
             // If topic belongs to the broker, register it to the topics list.
-            if (brokerId == hash){
-                myTopics.put(topic, new Topic(topic));   //  !It's OK . Ta topic tou kathe broker mpainoun sto hashmap
-            }
+            brokers.get(hash).myTopics.put(topic, new Topic(topic));
 
+            //if (brokerId == hash){
+            //    myTopics.put(topic, new Topic(topic));   //  !It's OK . Ta topic tou kathe broker mpainoun sto hashmap
+            //}
         }
 
+        //System.out.println("Size: " + brokers.size());
+        for(Broker b: this.brokers) {
+            System.out.println("Broker ID: " + b.getBrokerId() + " \nManaging Topics: ");
+            for (String i : b.myTopics.keySet()) {
+                System.out.println(i);
+            }
+            System.out.println("\n");
+        }
 
         // Start listening for connections.
         providerSocket = new ServerSocket(port);
         System.out.println("[BROKER] "+ getBrokerId() + " Initializing data.");
 
-        while(true) {       //Accepting Consumer queries.
+        while(true) {       //Accepting UserNode queries.
             System.out.println("[BROKER] Waiting for userNode connection.");
-            Socket client = providerSocket.accept();
+            Socket user = providerSocket.accept();
 
             System.out.println("[BROKER] Connected to a UserNode!");
 
@@ -93,12 +106,15 @@ public class Broker implements Node{
             //Thread t = new ActionsForUserNode(client);
             //t.start();
 
+            ActionsForUserNodes consumerThread = new ActionsForUserNodes(user);
+            pool.execute(consumerThread);
+
         }
 
     }
 
 
-    private class ActionsForUserNode extends Thread {
+    private class ActionsForUserNodes extends Thread {
 
         //Sockets for consumer and publisher, I/O streams, reader/writers.
         private Socket connection;
@@ -111,13 +127,17 @@ public class Broker implements Node{
         private ObjectOutputStream outC;
         private PrintWriter publisherWriter;
 
-        public ActionsForUserNode(Socket socket) {
+        public ActionsForUserNodes(Socket socket) {
             this.connection = socket;
         }
-/*
+
+        /*
         public void run() {
             try {
-
+                    String topic;
+                    inP = new ObjectInputStream(inP.getInputStream());
+                    outC.writeObject(new SocketMessage("USER_TOPIC_LOOKUP",new SocketMessageContent(topic)));
+                    outC.flush();
 
                 }
 
@@ -147,13 +167,15 @@ public class Broker implements Node{
                     ioException.printStackTrace();
                 }
             }
+       */
 
- */
     }
 
 
 
-
+    public void addBroker(Broker b){
+        brokers.add(b);
+    }
 
     public List<Broker> getBrokers() {
         return brokers;
@@ -173,6 +195,11 @@ public class Broker implements Node{
 
     public void setBrokerId(int brokerId) {
         this.brokerId = brokerId;
+    }
+    public static void initBrokers(){
+        for(int i=0;i<3;i++){
+            brokers.add(new Broker(i));
+        }
     }
 
     public int getBrokerId() {
