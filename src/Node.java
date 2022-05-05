@@ -22,7 +22,7 @@ public interface Node {
     //All existing Groups in the App
     public static final List<String> topics = Arrays.asList("topic1", "topic2", "topic3", "topic4", "topic5");
 
-    public int init(int port) throws UnknownHostException, IOException, NoSuchAlgorithmException;
+    public int init(int port) throws UnknownHostException, IOException, NoSuchAlgorithmException, ClassNotFoundException;
 
     public List<Broker> getBrokers();
 

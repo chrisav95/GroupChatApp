@@ -17,6 +17,17 @@ public class Broker implements Node{
     private int brokerId;
     private int port;
 
+    private Socket connection;
+    private Socket requestSocket = null;
+    private PrintWriter printOut;
+    private BufferedReader out;
+    private InputStreamReader in;
+    private BufferedReader publisherReader;
+    private ObjectInputStream inP;
+    private ObjectOutputStream outC;
+    private PrintWriter publisherWriter;
+    private String connectionType;
+
     public Broker(){}
 
     public Broker(int id){
@@ -27,7 +38,7 @@ public class Broker implements Node{
 
     }
 
-    public static void main(String[] args) throws IOException, NoSuchAlgorithmException {
+    public static void main(String[] args) throws IOException, NoSuchAlgorithmException, ClassNotFoundException {
 
         Broker b;
         initBrokers();
@@ -65,7 +76,7 @@ public class Broker implements Node{
     }
 
     // Initialize broker.
-    public int init(int port) throws UnknownHostException, IOException, NoSuchAlgorithmException {
+    public int init(int port) throws UnknownHostException, IOException, NoSuchAlgorithmException, ClassNotFoundException {
 
         for (String topic : topics)
         {
@@ -99,14 +110,60 @@ public class Broker implements Node{
         while(true) {       //Accepting UserNode queries.
             System.out.println("[BROKER] Waiting for userNode connection.");
             Socket user = providerSocket.accept();
-
+            in = new InputStreamReader(user.getInputStream());
+            out = new BufferedReader(in);
+            printOut = new PrintWriter(user.getOutputStream(), true);
+            outC = new ObjectOutputStream(user.getOutputStream());
             System.out.println("[BROKER] Connected to a UserNode!");
 
+            String topic;
+            boolean exists = false; //Checks if a topic exists in current broker's list
+            //usernode establishes whether he is a publisher or a consumer
+            SocketMessage response = (SocketMessage) inP.readObject();
+            topic = response.getContent().getTopic(); //reading consumer/publisher first message
+            connectionType = response.getType();
+            if (connectionType == "PUBLISHER_CONNECTION") {
+
+                topic = "";
+                for (String t : topics) {
+                    topic = topic + t + ":"; //Sends to publisher the available topic list.
+                }
+                outC.writeObject(new SocketMessage("TOPIC_LIST", new SocketMessageContent(topic)));
+                outC.flush();
+
+                response = (SocketMessage) inP.readObject(); //Publisher's chosen topic
+                if (response.getType() == "USER_TOPIC_LOOKUP") {
+                    for (Broker b : brokers) {
+                        for (String t : myTopics.keySet()) {
+                            if (b.brokerId == this.getBrokerId() && response.getContent().getTopic() == t) {
+                                exists = true;
+                            }
+                        }
+                    }
+
+                    if (exists) {
+                        topic = "topic info"; // wip
+                        outC.writeObject(new SocketMessage("USER_TOPIC_LOOKUP_SUCCESS", new SocketMessageContent(topic)));
+                        outC.flush();
+                    } else {
+                        //Sinexizoume edw pou prepei na kanei redirect sto swsto broker!!!!
+                        outC.writeObject(new SocketMessage("USER_TOPIC_LOOKUP_REDIRECT", new SocketMessageContent(topic)));
+                        outC.flush();
+                    }
+                    outC.writeObject(new SocketMessage("TOPIC_LIST", new SocketMessageContent(topic)));
+                    outC.flush();
+                }
+
+            } else if (connectionType == "CONSUMER_CONNECTION") {
+
+            } else {
+                System.out.println("Unknown connection.");
+            }
             //Συμφωνα με το LAB2 ό,τι κανει μετα ο server είναι σε ενα thread που παίρνει όρισμα το socket
             //Thread t = new ActionsForUserNode(client);
             //t.start();
 
-            ActionsForUserNodes consumerThread = new ActionsForUserNodes(user);
+            ActionsForUserNodes consumerThread = new ActionsForUserNodes(user, connectionType);
             pool.execute(consumerThread);
 
         }
@@ -117,40 +174,31 @@ public class Broker implements Node{
     private class ActionsForUserNodes extends Thread {
 
         //Sockets for consumer and publisher, I/O streams, reader/writers.
-        private Socket connection;
-        private Socket requestSocket = null;
-        private PrintWriter printOut;
-        private BufferedReader out;
-        private InputStreamReader in;
-        private BufferedReader publisherReader;
-        private ObjectInputStream inP;
-        private ObjectOutputStream outC;
-        private PrintWriter publisherWriter;
 
-        public ActionsForUserNodes(Socket socket) {
-            this.connection = socket;
+        public ActionsForUserNodes(Socket socket, String type) {
+            connection = socket;
+            connectionType = type;
         }
 
-        /*
+
         public void run() {
             try {
-                    String topic;
-                    inP = new ObjectInputStream(inP.getInputStream());
-                    outC.writeObject(new SocketMessage("USER_TOPIC_LOOKUP",new SocketMessageContent(topic)));
-                    outC.flush();
+                //I/O streams for the consumer
+                in = new InputStreamReader(connection.getInputStream());
+                out = new BufferedReader(in);
+                printOut = new PrintWriter(connection.getOutputStream(), true);
+                outC = new ObjectOutputStream(connection.getOutputStream());
+                String topic = "";
+                outC.writeObject(new SocketMessage("USERNODE_TYPE", new SocketMessageContent(topic)));
+                outC.flush();
+
+
+                while (true) { //This is where the Broker pulls from the Publisher and pushes to the Consumer the mp3 that's been asked from the query.
 
                 }
-
-
-                while(true) { //This is where the Broker pulls from the Publisher and pushes to the Consumer the mp3 that's been asked from the query.
-
-                }
-
 
 
             } catch (IOException e) {
-                e.printStackTrace();
-            } catch (ClassNotFoundException e) {
                 e.printStackTrace();
             } finally {
                 try {
@@ -159,7 +207,7 @@ public class Broker implements Node{
                     in.close();
                     out.close();
                     connection.close();
-                    if(requestSocket != null) {
+                    if (requestSocket != null) {
                         requestSocket.close();
                         publisherReader.close();
                     }
@@ -167,10 +215,10 @@ public class Broker implements Node{
                     ioException.printStackTrace();
                 }
             }
-       */
 
+
+        }
     }
-
 
 
     public void addBroker(Broker b){
