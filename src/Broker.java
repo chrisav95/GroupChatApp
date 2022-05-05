@@ -87,7 +87,7 @@ public class Broker implements Node{
             System.out.println("[BROKER] Waiting for userNode connection.");
             Socket client = providerSocket.accept();
 
-            System.out.println("[BROKER] Connected to a consumer!");
+            System.out.println("[BROKER] Connected to a UserNode!");
 
             //Συμφωνα με το LAB2 ό,τι κανει μετα ο server είναι σε ενα thread που παίρνει όρισμα το socket
             //Thread t = new ActionsForUserNode(client);

@@ -37,9 +37,11 @@ public class UserNode implements Node{
         UserNode user = new UserNode(keyboard.readLine());
 
         user.connect();  //Συνδεση του UserNode με εναν τυχαίο Broker
+        //System.out.println("mpika  ston broker");
 
-        user.init(getSocket().getPort());
+        int port = user.init(getSocket().getPort());
 
+        System.out.println(port);
         //Thread consumer = new Consumer(topic , getSocket());
         //consumer.start();
 
@@ -53,6 +55,7 @@ public class UserNode implements Node{
     @Override
     public int init(int port) throws UnknownHostException, IOException {
         try {
+
             System.out.println("Available group-chats/topics to enter: ");  //printing groups/topics for which a broker is responsible
             for (String topic : topics) {
                 System.out.println(topic);
@@ -71,11 +74,14 @@ public class UserNode implements Node{
                 }
 
 
+
                 // Ask broker for topic info.
                 output.writeObject(new SocketMessage("USER_TOPIC_LOOKUP",new SocketMessageContent(topic)));
                 output.flush();
 
+                input = new ObjectInputStream(requestSocket.getInputStream());
                 SocketMessage reply = (SocketMessage) input.readObject();
+                System.out.print(reply.getType());
 
 
                 /**
@@ -154,15 +160,20 @@ public class UserNode implements Node{
                     requestSocket = new Socket(ip, THIRDBROKER);
                 }
             }
-
             keyboard = new BufferedReader(new InputStreamReader(System.in));
+
             output = new ObjectOutputStream(requestSocket.getOutputStream());
-            input = new ObjectInputStream(requestSocket.getInputStream());
 
+            //System.out.println("mpika");
+            //input = new ObjectInputStream(requestSocket.getInputStream());
 
-           // input = new InputStreamReader(requestSocket.getInputStream());
+            //System.out.println("mpika ");
+            // input = new InputStreamReader(requestSocket.getInputStream());
+
             //out = new BufferedReader(input);
+
             initializeQuery = new PrintWriter(requestSocket.getOutputStream(), true);
+
             //inB = new ObjectInputStream(requestSocket.getInputStream());
 
         } catch (UnknownHostException e) {
@@ -175,6 +186,9 @@ public class UserNode implements Node{
     public void connect(int port) { //Connects to a Broker and initializes sockets, readers/writers and I/O streams
         try {
             requestSocket = new Socket(ip, port);
+
+
+
             output = new ObjectOutputStream(requestSocket.getOutputStream());
             input = new ObjectInputStream(requestSocket.getInputStream());
             //input = new InputStreamReader(requestSocket.getInputStream());
