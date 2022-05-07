@@ -30,12 +30,14 @@ public class Consumer extends Thread {
             in = new ObjectInputStream(connection.getInputStream());
 
 
+
+            /*fakelo tha ftiaxnoume gia kathe topic kai oxi gia kathe user
             // The folder we're gonna save all the files that the brokers sent us.
             File theDir = new File("./History/" + profileName);
             if (!theDir.exists()){
                 theDir.mkdirs();
             }
-
+            */
 
 
         } catch (IOException e) {
