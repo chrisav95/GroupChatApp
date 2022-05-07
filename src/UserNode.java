@@ -18,9 +18,9 @@ public class UserNode implements Node{
     private ObjectOutputStream output;
 
    // private ObjectInputStream inB;
-    private int port;
+    private static int port;
     private static String profileName;
-
+    private static String topic;
 
     public UserNode(String profileName) {
         this.profileName = profileName;
@@ -40,14 +40,15 @@ public class UserNode implements Node{
         user.connect();  //Συνδεση του UserNode με εναν τυχαίο Broker
         //System.out.println("mpika  ston broker");
 
-        int port = user.init(getSocket().getPort());
+        port = user.init(getSocket().getPort());
 
-        System.out.println(port);
-        //Thread consumer = new Consumer(getSocket(),profileName);
-        //consumer.start();
+        //
+        // System.out.println(port);
+        Thread consumer = new Consumer(getSocket(),topic,profileName);
+        consumer.start();
 
-        //Thread publisher = new Publisher(getSocket(),profileName);
-        //publisher.start();
+        Thread publisher = new Publisher(getSocket(),topic,profileName);
+        publisher.start();
 
         System.out.println("Bye!");
     }
@@ -59,7 +60,7 @@ public class UserNode implements Node{
           
             
           // Dinoume to Connection Type ston broker
-            output.writeObject(new SocketMessage("PUBLISHER_CONNECTION",new SocketMessageContent(profileName)));
+            output.writeObject(new SocketMessage("USER_CONNECTION",new SocketMessageContent(profileName)));
             output.flush();
 
 
@@ -72,7 +73,7 @@ public class UserNode implements Node{
              * The topic list from broker
              */
             if (reply.getType() == "TOPIC_LIST") {
-                System.out.print(reply.getContent().getTopic());
+                System.out.print(reply.getContent().getMessage());
             }
 
             /*
@@ -82,7 +83,8 @@ public class UserNode implements Node{
             */
 
             System.out.println("Type the name of an available group-chat/topic (type 'quit' to disconnect): ");
-            String topic = keyboard.readLine().trim();
+            //String
+            topic = keyboard.readLine().trim();
 
             // Ask broker for topic info.
             output.writeObject(new SocketMessage("USER_TOPIC_LOOKUP",new SocketMessageContent(topic)));
