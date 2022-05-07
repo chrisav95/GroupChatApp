@@ -30,7 +30,9 @@ public class Topic implements Serializable{
         this.topicName = topicName;
     }
 
-    //getHistory
+    public List<String> getHistory() {
+        return history;
+    }
 
     //addSubscriber to xrhsimopoiei o Broker gia na prosthetei kainourious subs
 

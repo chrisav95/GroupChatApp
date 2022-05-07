@@ -15,7 +15,7 @@ public class Publisher extends Thread {
 //ayta ta xreiazomaste apo tin meria tou broker gia na grapsoume sto client
 
 
-    public Publisher(Socket connection , String profileName) {
+    public Publisher(Socket connection , String topic ,String profileName) {
         try {
 
             this.profileName = profileName;
@@ -25,6 +25,9 @@ public class Publisher extends Thread {
 
             out = new ObjectOutputStream(connection.getOutputStream());
             in = new ObjectInputStream(connection.getInputStream());
+            this.keyboard = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+            this.writer= new BufferedWriter(new OutputStreamWriter(connection.getOutputStream()));
+
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -40,7 +43,40 @@ public class Publisher extends Thread {
     public void run() {
         try {
 
+            // Dinoume to Connection Type ston broker
+            out.writeObject(new SocketMessage("PUBLISHER_CONNECTION",new SocketMessageContent(profileName)));
+            out.flush();
+
+
+            in = new ObjectInputStream(connection.getInputStream());
+            SocketMessage reply = (SocketMessage) in.readObject();
+
             keyboard = new BufferedReader(new InputStreamReader(System.in));
+            String message;
+            MultimediaFile m = null;
+            Value v = null;
+
+            if (reply.getType() == "BROKER_CONNECTED") {
+                while(true){
+                    message = keyboard.readLine().trim();
+                    if (message.startsWith("video") | message.startsWith("photo") | message.startsWith("txt"))   {
+                        String[] arrOfStr = message.split(" ", 2);
+                        String path = arrOfStr[1];
+                        m = new MultimediaFile(path,profileName,"","",null);
+                        v = new Value(m);
+                        //push(topic,v);
+                    }
+                    //push();
+
+
+                }
+
+            }
+
+
+            // Create a scanner for user input.
+            //Scanner scanner = new Scanner(System.in);
+            //System.out.println("What do you want to send (enter filepath) OR type 'quit' to disconnect : ");
 
 
             while(true) {
@@ -56,7 +92,8 @@ public class Publisher extends Thread {
                     System.out.println("ERROR: file " + tempFile.getName() + "  does not exists.");
                 }
 
-                push(tempFile);
+
+                //push(tempFile);
 
 
 
@@ -71,6 +108,8 @@ public class Publisher extends Thread {
 
         } catch (IOException e) {
             e.printStackTrace();
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
         } finally {
             try {
                 in.close();
@@ -83,15 +122,17 @@ public class Publisher extends Thread {
 
 
 
-
-    private void push(File file)  {
-        MultimediaFile m = null;
-        Value v = null;
+/*
+    private void push(String topic,Value v)  {
+        //MultimediaFile m = null;
+        //Value v = null;
 
         try {
+
+
             // From AggelosProject
             byte[] chunk = new byte[512 * 1024]; //Creating the chunk array and setting how many bytes each chunk is.
-            FileInputStream is = new FileInputStream(file);
+            FileInputStream is = new FileInputStream(v.getMusicFile().getMultimediaFileName());
             int rc = is.read(chunk); //Reading the first chunk of the file.
 
 
@@ -111,7 +152,7 @@ public class Publisher extends Thread {
             out.writeObject(v); //Sends terminal value.
             out.flush();
 
-
+*/
 
 /*
             //  Trying Alex's code
@@ -141,7 +182,7 @@ public class Publisher extends Thread {
                 }
             }
 
-*/
+
 
         }catch (IOException e) {
         e.printStackTrace();
@@ -149,9 +190,9 @@ public class Publisher extends Thread {
 
     }
 
+*/
 
-
-
+/*
 
     public void sendMessage() {
         try {
@@ -178,6 +219,6 @@ public class Publisher extends Thread {
     }
 
 
-
+*/
 
 }

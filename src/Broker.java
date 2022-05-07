@@ -113,7 +113,7 @@ public class Broker implements Node{
             //t.start();
 
             ActionsForUserNodes consumerThread = new ActionsForUserNodes(user, this.getBrokerId(), this.getPort());
-            pool.execute(consumerThread);
+            pool.execute(consumerThread); //like start
 
         }
 
@@ -145,38 +145,40 @@ public class Broker implements Node{
                 boolean legitTopic = false; //Becomes true if the requested topic is legit
                 String currentTopic = "";
                 int rightPort = 0;
+                String profileName = "";
 
-                //UserNode establishes whether he is in communication with a Publisher or a Consumer
+                //UserNode establishes whether he is in communication with a User, Publisher or a Consumer
                 SocketMessage response = (SocketMessage) inP.readObject();
                 connectionType = response.getType();
 
                 /**
-                 * Communication with a Publisher
+                 * Communication with a User
                  */
-                if (connectionType == "PUBLISHER_CONNECTION") {
+                if (connectionType == "USER_CONNECTION") {
                     for (String t : topics) {
-                        message = message + t + ":"; //Sends to publisher the available topic list.
+                        message = message + t + ":"; //Sends to user the available topic list.
                     }
                     outC.writeObject(new SocketMessage("TOPIC_LIST", new SocketMessageContent(message)));
                     outC.flush();
-                    response = (SocketMessage) inP.readObject(); //Publisher's chosen topic
+                    response = (SocketMessage) inP.readObject(); //User's chosen topic
 
                     //If user requests for a topic
                     if (response.getType() == "USER_TOPIC_LOOKUP") {
                         //Checking if the requested topic is a legit topic
                         while(!legitTopic){
                             for (String t : topics){
-                                if(response.getContent().getTopic() == t){
+                                if(response.getContent().getMessage() == t){
                                     legitTopic = true;
-                                    currentTopic = response.getContent().getTopic();
+                                    currentTopic = response.getContent().getMessage();
+                                    //EDW READER TOU TXT KAI ADD STO TOPIC.HISTORY TOU HASHMAP
                                     break;
                                 }
                             }
                             if(!legitTopic){
-                                message = "Given topic (" + response.getContent().getTopic() + ") does not exist.";
+                                message = "Given topic (" + response.getContent().getMessage() + ") does not exist.";
                                 outC.writeObject(new SocketMessage("USER_TOPIC_DOES_NOT_EXIST", new SocketMessageContent(message)));
                                 outC.flush();
-                                response = (SocketMessage) inP.readObject(); //Publisher's new topic
+                                response = (SocketMessage) inP.readObject(); //User's new topic
                             }
                         }
 
@@ -189,23 +191,40 @@ public class Broker implements Node{
                             }
                         }
 
-                        //Responds with message of success and waits for a Publisher's push
+                        //Responds with message of success and waits for a Publisher connection
                         if (rightPort == port) {
-                            message = "";
+                            message = "Topic found";
                             outC.writeObject(new SocketMessage("USER_TOPIC_LOOKUP_SUCCESS", new SocketMessageContent(message)));
                             outC.flush();
 
                             //edw tha ginei h while gia ta push tou publisher
+                            //add sto hashmap sto Topic
 
                         //Redirects the user to the Broker responsible for the requested topic
                         } else {
                             message = String.valueOf(rightPort); //Sending the right port
                             outC.writeObject(new SocketMessage("USER_TOPIC_LOOKUP_REDIRECT", new SocketMessageContent(message)));
                             outC.flush();
-                            //The Publisher disconnects
+                            //The User disconnects
                         }
 
                     }
+
+                }
+                /**
+                 * Communication with a Publisher
+                 */
+                else if (connectionType == "PUBLISHER_CONNECTION"){
+                    profileName = response.getContent().getMessage();
+
+                    message = "Connected to " +currentTopic+ " Waiting for message!";
+                    outC.writeObject(new SocketMessage("BROKER_CONNECTED", new SocketMessageContent(message)));
+                    outC.flush();
+
+
+                    //waiting for pushes
+                    //add to arraylist history
+
 
                 }
 
@@ -213,29 +232,23 @@ public class Broker implements Node{
                  * Communication with a Consumer
                  */
                 else if (connectionType == "CONSUMER_CONNECTION") {
+                    //SENDING ALL CONTENTS OF HASHMAP
                     message = "";
-                    outC.writeObject(new SocketMessage("CONSUMER_CONNECTION_SUCCESS", new SocketMessageContent(message)));
+                    outC.writeObject(new SocketMessage("USER_TOPIC_FULL_HISTORY", new SocketMessageContent(message)));
                     outC.flush();
 
-                    response = (SocketMessage) inP.readObject();
+                    List<String> history = myTopics.get(currentTopic).getHistory();
 
-                    if(response.getType() == "USER_PULL_TOPIC"){
-
-                        // mallon :
-                        while (true) { //This is where the Broker pulls from the Publisher and pushes to the Consumer the history of a topic.
-
-                        }
-
+                    for (String m : history) { //This is where the Broker pulls from the Publisher and pushes to the Consumer the history of a topic.
+                        message = ""; //ena chunk
+                        outC.writeObject(new SocketMessage("USER_TOPIC_CHUNK", new SocketMessageContent(message)));
+                        outC.flush();
                     }
-
-
 
 
                 } else {
                     System.out.println("Unknown connection.");
                 }
-
-
 
 
             } catch (IOException e) {

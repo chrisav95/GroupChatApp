@@ -17,10 +17,10 @@ public class UserNode implements Node{
     private ObjectInputStream input;
     private ObjectOutputStream output;
 
-   // private ObjectInputStream inB;
-    private int port;
+    // private ObjectInputStream inB;
+    private static int port;
     private static String profileName;
-
+    private static String topic;
 
     public UserNode(String profileName) {
         this.profileName = profileName;
@@ -40,14 +40,15 @@ public class UserNode implements Node{
         user.connect();  //Συνδεση του UserNode με εναν τυχαίο Broker
         //System.out.println("mpika  ston broker");
 
-        int port = user.init(getSocket().getPort());
+        port = user.init(getSocket().getPort());
 
-        System.out.println(port);
-        //Thread consumer = new Consumer(getSocket(),profileName);
-        //consumer.start();
+        //
+        // System.out.println(port);
+        Thread consumer = new Consumer(getSocket(),topic,profileName);
+        consumer.start();
 
-        //Thread publisher = new Publisher(getSocket(),profileName);
-        //publisher.start();
+        Thread publisher = new Publisher(getSocket(),topic,profileName);
+        publisher.start();
 
         System.out.println("Bye!");
     }
@@ -56,10 +57,10 @@ public class UserNode implements Node{
     @Override
     public int init(int port) throws UnknownHostException, IOException {
         try {
-          
-            
-          // Dinoume to Connection Type ston broker
-            output.writeObject(new SocketMessage("PUBLISHER_CONNECTION",new SocketMessageContent(profileName)));
+
+
+            // Dinoume to Connection Type ston broker
+            output.writeObject(new SocketMessage("USER_CONNECTION",new SocketMessageContent(profileName)));
             output.flush();
 
 
@@ -72,7 +73,7 @@ public class UserNode implements Node{
              * The topic list from broker
              */
             if (reply.getType() == "TOPIC_LIST") {
-                System.out.print(reply.getContent().getTopic());
+                System.out.print(reply.getContent().getMessage());
             }
 
             /*
@@ -82,62 +83,54 @@ public class UserNode implements Node{
             */
 
             System.out.println("Type the name of an available group-chat/topic (type 'quit' to disconnect): ");
-            String topic = keyboard.readLine().trim();
-
-            // Ask broker for topic info.
-            output.writeObject(new SocketMessage("USER_TOPIC_LOOKUP",new SocketMessageContent(topic)));
-            output.flush();
-
-
-            //input = new ObjectInputStream(requestSocket.getInputStream());
-            reply = (SocketMessage) input.readObject();
-            System.out.print(reply.getType());
 
             while (true) {
 
+                //String
+                topic = keyboard.readLine().trim();
+
+                // Ask broker for topic info.
+                output.writeObject(new SocketMessage("USER_TOPIC_LOOKUP",new SocketMessageContent(topic)));
+                output.flush();
+
+
+                //input = new ObjectInputStream(requestSocket.getInputStream());
+                reply = (SocketMessage) input.readObject();
+                System.out.println(reply.getType());
+
+
+
+                if (topic.equals("quit")) { //Terminal message
+                    initializeQuery.println(topic); //Sends terminal message to Broker so that he can disconnect and terminate the Thread
+                    disconnect(); //Disconnecting from the Broker
+                    break;
+                }
 
                 /**
                  * The topic we're interested in does not exists.
                  */
-                if (reply.getType() == "USER_TOPIC_LOOKUP_ERROR"){
+                if (reply.getType() == "USER_TOPIC_DOES_NOT_EXIST"){
                     // Pick a different topic and ask the broker again.
                     System.out.println("Topic does not exist ! Type the name of an available group-chat/topic (type 'quit' to disconnect): ");
-                    topic = keyboard.readLine().trim();
-
-                    // Ask broker for topic info.
-                    output.writeObject(new SocketMessage("USER_TOPIC_LOOKUP",new SocketMessageContent(topic)));
-                    output.flush();
-
-                    reply = (SocketMessage) input.readObject();
-
-                    if (topic.equals("quit")) { //Terminal message
-                        initializeQuery.println(topic); //Sends terminal message to Broker so that he can disconnect and terminate the Thread
-                        disconnect(); //Disconnecting from the Broker
-                        break;
-                    }
 
                 }
-
-
                 /**
                  * The topic we're interested in is managed by a different broker.
                  */
-                if (reply.getType() == "USER_TOPIC_LOOKUP_REDIRECT"){
+                else if (reply.getType() == "USER_TOPIC_LOOKUP_REDIRECT"){
                     // Get host and port for the correct broker.
+                    System.out.println("Redirecting to the right broker.");
                     disconnect();
                     port = reply.getContent().getPort();
                     connect(port);
                     return port;
                 }
-
-
                 /**
                  * We're already connected to the correct broker.
                  */
-                if (reply.getType() == "USER_TOPIC_LOOKUP_SUCCESS"){
+                else if (reply.getType() == "USER_TOPIC_LOOKUP_SUCCESS"){
                     return port;
                 }
-
 
             }
 

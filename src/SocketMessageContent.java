@@ -13,18 +13,18 @@ import java.io.Serializable;
 public class SocketMessageContent implements Serializable{
     private static final long serialVersionUID = 1L;
 
-    private String topic;
+    private String message;
 
-    public SocketMessageContent(String topic) {
-        this.topic = topic;
+    public SocketMessageContent(String message) {
+        this.message = message;
     }
 
-    public String getTopic() {
-        return topic;
+    public String getMessage() {
+        return message;
     }
 
-    public void setTopic(String topic) {
-        this.topic = topic;
+    public void setMessage(String topic) {
+        this.message = message;
     }
 
     private int port;

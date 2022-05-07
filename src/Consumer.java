@@ -13,11 +13,12 @@ public class Consumer extends Thread {
     Socket connection;
     String topic;
     BufferedReader keyboard;
+    String historyPath;
 
 
 
 
-    public Consumer(Socket connection , String topic) {
+    public Consumer(Socket connection , String topic ,String profileName) {
         try {
 
             this.profileName = profileName;
@@ -54,29 +55,52 @@ public class Consumer extends Thread {
     public void run() {
         try {
 
-            // Intermediate queue to hold chunks.
 
-
-            // // Pull the topic's history.
-            out.writeObject(new SocketMessage("USER_PULL_TOPIC",new SocketMessageContent(topic)));
+            // Dinoume to Connection Type ston broker
+            out.writeObject(new SocketMessage("CONSUMER_CONNECTION",new SocketMessageContent(topic)));
             out.flush();
 
 
-            in = new ObjectInputStream(connection.getInputStream());
+            //in = new ObjectInputStream(connection.getInputStream());
+            //SocketMessage reply = (SocketMessage) in.readObject();
+
+
+            // // Pull the topic's history.
+            //out.writeObject(new SocketMessage("USER_PULL_TOPIC",new SocketMessageContent(topic)));
+            //out.flush();
+
             SocketMessage reply = (SocketMessage) in.readObject();
+
+
+
+            // History Reading First Time Only
+            if (reply.getType() == "USER_TOPIC_FULL_HISTORY") {
+
+                while (!reply.getContent().getMessage().isEmpty()){
+                    if (reply.getType() == "USER_TOPIC_CHUNK") {
+                        reply = (SocketMessage) in.readObject();
+                        System.out.println(reply.getContent().getMessage());
+                    }
+                }
+
+            }
+
+
 
             while(true) {
                 // Listen for broker messages.
-                if (reply.getType() == "USER_TOPIC_FULL_HISTORY") {
-                    //prepei na parw olo to istoriko gia to sugkekrimeno topic
-                }
 
                 if (reply.getType() == "USER_MULTIMEDIA_CHUNK") {
                     // Get info from the message.
-
-
+                    //Broker send the path of the file
+                    //Notify User
+                    System.out.println("File sending " + reply.getContent().getMessage());
                 }
 
+                if(reply.getType() == "USER_MESSAGE"){
+                    System.out.println(reply.getContent().getMessage());
+                    //edw tha pairnw apo ton broker ta mnmt pou stelnei o publisher ston broker
+                }
 
 
             }
