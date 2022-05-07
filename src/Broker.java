@@ -170,6 +170,7 @@ public class Broker implements Node{
                             for (String t : topics){
                                 if(response.getContent().getTopic() == t){
                                     legitTopic = true;
+                                    break;
                                 }
                             }
                             if(!legitTopic){
@@ -195,6 +196,7 @@ public class Broker implements Node{
                             outC.writeObject(new SocketMessage("USER_TOPIC_LOOKUP_SUCCESS", new SocketMessageContent(topic)));
                             outC.flush();
                             //edw prepei na ginei h pull??
+                            //perimenw connection apo consumer
 
                         //Redirects the user to the Broker responsible for the requested topic
                         } else {

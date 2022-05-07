@@ -55,12 +55,6 @@ public class UserNode implements Node{
     public int init(int port) throws UnknownHostException, IOException {
         try {
 
-            System.out.println("Available group-chats/topics to enter: ");  //printing groups/topics for which a broker is responsible
-            for (String topic : topics) {
-                System.out.println(topic);
-            }
-
-
             while (true) {
 
                 System.out.println("Type the name of an available group-chat/topic (type 'quit' to disconnect): ");
