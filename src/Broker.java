@@ -10,6 +10,7 @@ import java.util.concurrent.Executors;
 
 public class Broker implements Node{
 
+    public static final List<String> topics = Arrays.asList("topic1", "topic2", "topic3", "topic4", "topic5"); //All existing Groups in the App
     HashMap<String, Topic> myTopics = new HashMap<String, Topic>(); //Topics managed by this Broker
 
     private ExecutorService pool = Executors.newFixedThreadPool(100); //Broker thread pool.
@@ -136,9 +137,10 @@ public class Broker implements Node{
             port = p;
         }
 
+
         public void run() {
             try {
-                //I/O streams for the user connection
+                //I/O streams for the consumer
                 in = new InputStreamReader(connection.getInputStream());
                 out = new BufferedReader(in);
                 printOut = new PrintWriter(connection.getOutputStream(), true);
@@ -146,8 +148,7 @@ public class Broker implements Node{
                 inP = new ObjectInputStream(connection.getInputStream());
                 publisherReader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
                 String topic = "";
-                boolean exists = false; //Checks if a topic exists in current broker's list
-                boolean legitTopic = false; //Checks if the requested topic is correct
+                boolean legitTopic = false; //Becomes true if the requested topic is legit
                 int rightPort = 0;
 
                 //UserNode establishes whether he is a publisher or a consumer
@@ -162,24 +163,24 @@ public class Broker implements Node{
                     outC.flush();
                     response = (SocketMessage) inP.readObject(); //Publisher's chosen topic
 
-                    //If user request for a topic
+                    //If user requests for a topic
                     if (response.getType() == "USER_TOPIC_LOOKUP") {
                         //Checking if the requested topic is a legit topic
-                        while(!legitTopic) {
-                            for (String t : topics) {
-                                if (response.getContent().getTopic() == t) {
+                        while(!legitTopic){
+                            for (String t : topics){
+                                if(response.getContent().getTopic() == t){
                                     legitTopic = true;
                                 }
                             }
                             if(!legitTopic){
-                                topic = "Given topic" + "(" + response.getContent().getTopic() + ") does not exist.";
+                                topic = "Given topic (" + response.getContent().getTopic() + ") does not exist.";
                                 outC.writeObject(new SocketMessage("USER_TOPIC_DOES_NOT_EXIST", new SocketMessageContent(topic)));
                                 outC.flush();
-                                response = (SocketMessage) inP.readObject(); //Publisher's new topic.
+                                response = (SocketMessage) inP.readObject(); //Publisher's new topic
                             }
                         }
 
-                        //Checking if the current Broker is responsible for the requested topic
+                        //Checking if the current Broker is responsible for the requested topic.
                         for (Broker b : brokers) {
                             for (String t : myTopics.keySet()) {
                                 if (response.getContent().getTopic() == t) {
@@ -187,12 +188,13 @@ public class Broker implements Node{
                                 }
                             }
                         }
-                        //Responds with successful message and returns the topic's history
+
+                        //Responds with message of success and returns topic's history (the txt????)
                         if (rightPort == port) {
                             topic = "topic info"; // wip
                             outC.writeObject(new SocketMessage("USER_TOPIC_LOOKUP_SUCCESS", new SocketMessageContent(topic)));
                             outC.flush();
-                            //edw prepei na ginei h pull
+                            //edw prepei na ginei h pull??
 
                         //Redirects the user to the Broker responsible for the requested topic
                         } else {
