@@ -19,7 +19,8 @@ public class UserNode implements Node{
 
    // private ObjectInputStream inB;
     private int port;
-    private String profileName;
+    private static String profileName;
+
 
     public UserNode(String profileName) {
         this.profileName = profileName;
@@ -33,7 +34,8 @@ public class UserNode implements Node{
         System.out.println("Enter profile name: ");
 
         keyboard = new BufferedReader(new InputStreamReader(System.in));
-        UserNode user = new UserNode(keyboard.readLine());
+        profileName = keyboard.readLine();
+        UserNode user = new UserNode(profileName);
 
         user.connect();  //Συνδεση του UserNode με εναν τυχαίο Broker
         //System.out.println("mpika  ston broker");
@@ -41,10 +43,10 @@ public class UserNode implements Node{
         int port = user.init(getSocket().getPort());
 
         System.out.println(port);
-        //Thread consumer = new Consumer(topic , getSocket());
+        //Thread consumer = new Consumer(getSocket(),profileName);
         //consumer.start();
 
-        //Thread publisher = new Publisher(topic , getSocket());
+        //Thread publisher = new Publisher(getSocket(),profileName);
         //publisher.start();
 
         System.out.println("Bye!");
@@ -54,27 +56,44 @@ public class UserNode implements Node{
     @Override
     public int init(int port) throws UnknownHostException, IOException {
         try {
+          
+            
+          // Dinoume to Connection Type ston broker
+            output.writeObject(new SocketMessage("PUBLISHER_CONNECTION",new SocketMessageContent(profileName)));
+            output.flush();
+
+
+            System.out.println("Available group-chats/topics to enter: ");  //printing groups/topics for which a broker is responsible
+            //Pairnei apo ton Broker tin lista me to topics pou yparxoun
+            input = new ObjectInputStream(requestSocket.getInputStream());
+            SocketMessage reply = (SocketMessage) input.readObject();
+
+            /**
+             * The topic list from broker
+             */
+            if (reply.getType() == "TOPIC_LIST") {
+                System.out.print(reply.getContent().getTopic());
+            }
+
+            /*
+            for (String topic : topics) {
+                System.out.println(topic);
+            }
+            */
+
+            System.out.println("Type the name of an available group-chat/topic (type 'quit' to disconnect): ");
+            String topic = keyboard.readLine().trim();
+
+            // Ask broker for topic info.
+            output.writeObject(new SocketMessage("USER_TOPIC_LOOKUP",new SocketMessageContent(topic)));
+            output.flush();
+
+
+            //input = new ObjectInputStream(requestSocket.getInputStream());
+            reply = (SocketMessage) input.readObject();
+            System.out.print(reply.getType());
 
             while (true) {
-
-                System.out.println("Type the name of an available group-chat/topic (type 'quit' to disconnect): ");
-                String topic = keyboard.readLine().trim();
-
-                if (topic.equals("quit")) { //Terminal message
-                    initializeQuery.println(topic); //Sends terminal message to Broker so that he can disconnect and terminate the Thread
-                    disconnect(); //Disconnecting from the Broker
-                    break;
-                }
-
-
-
-                // Ask broker for topic info.
-                output.writeObject(new SocketMessage("USER_TOPIC_LOOKUP",new SocketMessageContent(topic)));
-                output.flush();
-
-                input = new ObjectInputStream(requestSocket.getInputStream());
-                SocketMessage reply = (SocketMessage) input.readObject();
-                System.out.print(reply.getType());
 
 
                 /**
@@ -90,8 +109,14 @@ public class UserNode implements Node{
                     output.flush();
 
                     reply = (SocketMessage) input.readObject();
-                }
 
+                    if (topic.equals("quit")) { //Terminal message
+                        initializeQuery.println(topic); //Sends terminal message to Broker so that he can disconnect and terminate the Thread
+                        disconnect(); //Disconnecting from the Broker
+                        break;
+                    }
+
+                }
 
 
                 /**
