@@ -56,9 +56,9 @@ public class UserNode implements Node{
     @Override
     public int init(int port) throws UnknownHostException, IOException {
         try {
-
-
-            // Dinoume to Connection Type ston broker
+          
+            
+          // Dinoume to Connection Type ston broker
             output.writeObject(new SocketMessage("PUBLISHER_CONNECTION",new SocketMessageContent(profileName)));
             output.flush();
 
