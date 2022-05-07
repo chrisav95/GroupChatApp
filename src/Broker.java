@@ -84,15 +84,10 @@ public class Broker implements Node{
             // Calculate topic's hash and `mod` it with the number of spawned brokers.
             BigInteger key = new BigInteger(calculateKeys(topic) , 16);
             int hash = (key.mod(BigInteger.valueOf(3))).intValue();
-            //System.out.println(hash); // As decimal...
-            //System.out.println(brokerId);
 
             // If topic belongs to the broker, register it to the topics list.
             brokers.get(hash).myTopics.put(topic, new Topic(topic));
 
-            //if (brokerId == hash){
-            //    myTopics.put(topic, new Topic(topic));   //  !It's OK . Ta topic tou kathe broker mpainoun sto hashmap
-            //}
         }
 
         //System.out.println("Size: " + brokers.size());
@@ -130,7 +125,6 @@ public class Broker implements Node{
     private class ActionsForUserNodes extends Thread {
 
         //Sockets for consumer and publisher, I/O streams, reader/writers.
-
         public ActionsForUserNodes(Socket socket, int id, int p) {
             connection = socket;
             brokerId = id;
@@ -147,19 +141,23 @@ public class Broker implements Node{
                 outC = new ObjectOutputStream(connection.getOutputStream());
                 inP = new ObjectInputStream(connection.getInputStream());
                 publisherReader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-                String topic = "";
+                String message = "";
                 boolean legitTopic = false; //Becomes true if the requested topic is legit
+                String currentTopic = "";
                 int rightPort = 0;
 
-                //UserNode establishes whether he is a publisher or a consumer
+                //UserNode establishes whether he is in communication with a Publisher or a Consumer
                 SocketMessage response = (SocketMessage) inP.readObject();
                 connectionType = response.getType();
 
+                /**
+                 * Communication with a Publisher
+                 */
                 if (connectionType == "PUBLISHER_CONNECTION") {
                     for (String t : topics) {
-                        topic = topic + t + ":"; //Sends to publisher the available topic list.
+                        message = message + t + ":"; //Sends to publisher the available topic list.
                     }
-                    outC.writeObject(new SocketMessage("TOPIC_LIST", new SocketMessageContent(topic)));
+                    outC.writeObject(new SocketMessage("TOPIC_LIST", new SocketMessageContent(message)));
                     outC.flush();
                     response = (SocketMessage) inP.readObject(); //Publisher's chosen topic
 
@@ -170,12 +168,13 @@ public class Broker implements Node{
                             for (String t : topics){
                                 if(response.getContent().getTopic() == t){
                                     legitTopic = true;
+                                    currentTopic = response.getContent().getTopic();
                                     break;
                                 }
                             }
                             if(!legitTopic){
-                                topic = "Given topic (" + response.getContent().getTopic() + ") does not exist.";
-                                outC.writeObject(new SocketMessage("USER_TOPIC_DOES_NOT_EXIST", new SocketMessageContent(topic)));
+                                message = "Given topic (" + response.getContent().getTopic() + ") does not exist.";
+                                outC.writeObject(new SocketMessage("USER_TOPIC_DOES_NOT_EXIST", new SocketMessageContent(message)));
                                 outC.flush();
                                 response = (SocketMessage) inP.readObject(); //Publisher's new topic
                             }
@@ -184,39 +183,59 @@ public class Broker implements Node{
                         //Checking if the current Broker is responsible for the requested topic.
                         for (Broker b : brokers) {
                             for (String t : myTopics.keySet()) {
-                                if (response.getContent().getTopic() == t) {
+                                if (currentTopic == t) {
                                     rightPort = b.port;
                                 }
                             }
                         }
 
-                        //Responds with message of success and returns topic's history (the txt????)
+                        //Responds with message of success and waits for a Publisher's push
                         if (rightPort == port) {
-                            topic = "topic info"; // wip
-                            outC.writeObject(new SocketMessage("USER_TOPIC_LOOKUP_SUCCESS", new SocketMessageContent(topic)));
+                            message = "";
+                            outC.writeObject(new SocketMessage("USER_TOPIC_LOOKUP_SUCCESS", new SocketMessageContent(message)));
                             outC.flush();
-                            //edw prepei na ginei h pull??
-                            //perimenw connection apo consumer
+
+                            //edw tha ginei h while gia ta push tou publisher
 
                         //Redirects the user to the Broker responsible for the requested topic
                         } else {
-                            topic = String.valueOf(rightPort);
-                            outC.writeObject(new SocketMessage("USER_TOPIC_LOOKUP_REDIRECT", new SocketMessageContent(topic)));
+                            message = String.valueOf(rightPort); //Sending the right port
+                            outC.writeObject(new SocketMessage("USER_TOPIC_LOOKUP_REDIRECT", new SocketMessageContent(message)));
                             outC.flush();
+                            //The Publisher disconnects
                         }
-
 
                     }
 
-                } else if (connectionType == "CONSUMER_CONNECTION") {
+                }
+
+                /**
+                 * Communication with a Consumer
+                 */
+                else if (connectionType == "CONSUMER_CONNECTION") {
+                    message = "";
+                    outC.writeObject(new SocketMessage("CONSUMER_CONNECTION_SUCCESS", new SocketMessageContent(message)));
+                    outC.flush();
+
+                    response = (SocketMessage) inP.readObject();
+
+                    if(response.getType() == "USER_PULL_TOPIC"){
+
+                        // mallon :
+                        while (true) { //This is where the Broker pulls from the Publisher and pushes to the Consumer the history of a topic.
+
+                        }
+
+                    }
+
+
+
 
                 } else {
                     System.out.println("Unknown connection.");
                 }
 
-                while (true) { //This is where the Broker pulls from the Publisher and pushes to the Consumer the mp3 that's been asked from the query.
 
-                }
 
 
             } catch (IOException e) {
