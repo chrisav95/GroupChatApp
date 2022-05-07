@@ -21,8 +21,9 @@ public class MultimediaFile implements Serializable{
 
     //Class constructor.
 
-    public MultimediaFile(String multimediaFileName, String profileName, String dateCreated,
-                          String length, String framerate, String frameHeight, String frameWidth, byte[] multimediaFileChunk) {
+    //public MultimediaFile(String multimediaFileName, String profileName, String dateCreated,
+                          //String length, String framerate, String frameHeight, String frameWidth, byte[] multimediaFileChunk) {
+    public MultimediaFile(String multimediaFileName, String profileName, String s, String s1, byte[] multimediaFileChunk){
         if(multimediaFileName != null) {
             this.multimediaFileName = multimediaFileName;
         }else {

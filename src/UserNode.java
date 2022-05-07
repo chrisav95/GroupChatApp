@@ -19,7 +19,8 @@ public class UserNode implements Node{
 
    // private ObjectInputStream inB;
     private int port;
-    private String profileName;
+    private static String profileName;
+
 
     public UserNode(String profileName) {
         this.profileName = profileName;
@@ -33,7 +34,8 @@ public class UserNode implements Node{
         System.out.println("Enter profile name: ");
 
         keyboard = new BufferedReader(new InputStreamReader(System.in));
-        UserNode user = new UserNode(keyboard.readLine());
+        profileName = keyboard.readLine();
+        UserNode user = new UserNode(profileName);
 
         user.connect();  //Συνδεση του UserNode με εναν τυχαίο Broker
         //System.out.println("mpika  ston broker");
@@ -41,10 +43,10 @@ public class UserNode implements Node{
         int port = user.init(getSocket().getPort());
 
         System.out.println(port);
-        //Thread consumer = new Consumer(topic , getSocket());
+        //Thread consumer = new Consumer(getSocket(),profileName);
         //consumer.start();
 
-        //Thread publisher = new Publisher(topic , getSocket());
+        //Thread publisher = new Publisher(getSocket(),profileName);
         //publisher.start();
 
         System.out.println("Bye!");
