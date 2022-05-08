@@ -73,14 +73,11 @@ public class UserNode implements Node{
              * The topic list from broker
              */
             if (reply.getType().equals("TOPIC_LIST")) {
-                System.out.print(reply.getContent().getMessage());
+                String[] topicArr = reply.getContent().getMessage().split(":");
+                for (String t : topicArr){
+                    System.out.println(t);
+                }
             }
-
-            /*
-            for (String topic : topics) {
-                System.out.println(topic);
-            }
-            */
 
             System.out.println("Type the name of an available group-chat/topic (type 'quit' to disconnect): ");
 

@@ -112,7 +112,7 @@ public class Broker implements Node{
             //Thread t = new ActionsForUserNode(client);
             //t.start();
 
-            ActionsForUserNodes consumerThread = new ActionsForUserNodes(user, this.getBrokerId(), this.getPort());
+            ActionsForUserNodes consumerThread = new ActionsForUserNodes(user, this.getBrokerId(), port);
             pool.execute(consumerThread); //like start
 
         }
@@ -172,6 +172,7 @@ public class Broker implements Node{
                                     legitTopic = true;
                                     currentTopic = response.getContent().getMessage();
                                     //EDW READER TOU TXT KAI ADD STO TOPIC.HISTORY TOU HASHMAP
+
                                     break;
                                 }
                             }
@@ -182,15 +183,18 @@ public class Broker implements Node{
                                 response = (SocketMessage) inP.readObject(); //User's new topic
                             }
                         }
-
+                        System.out.println("the topic we are searching for: "+ currentTopic);
                         //Checking if the current Broker is responsible for the requested topic.
                         for (Broker b : brokers) {
-                            for (String t : myTopics.keySet()) {
+                            System.out.println("b ids: " +b.brokerId);
+                            for (String t : b.myTopics.keySet()) {
                                 if (currentTopic.equals(t) ){
+                                    System.out.println("t" +t);
                                     rightPort = b.port;
                                 }
                             }
                         }
+                        System.out.println(rightPort);
 
                         //Responds with message of success and waits for a Publisher connection
                         if (rightPort == port) {
@@ -207,8 +211,8 @@ public class Broker implements Node{
                             outC.writeObject(new SocketMessage("USER_TOPIC_LOOKUP_REDIRECT", new SocketMessageContent(message)));
                             outC.flush();
                             //The User disconnects
-                        }
 
+                        }
                     }
 
                 }
