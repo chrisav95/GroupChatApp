@@ -11,8 +11,8 @@ public class Value implements Serializable{
 
     //Class constructor.
 
-    public Value(MultimediaFile musicFile) {
-        this.multimediaFile = musicFile;
+    public Value(MultimediaFile multiFile) {
+        this.multimediaFile = multiFile;
     }
 
     //Setters and getters of this class.

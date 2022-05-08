@@ -11,11 +11,11 @@ public class MultimediaFile implements Serializable{
     private static final long serialVersionUID = 1L;
     private String multimediaFileName;
     private String profileName;
-    private String dateCreated;
-    private String length;
-    private String framerate;
-    private String frameHeight;
-    private String frameWidth;
+    //private String dateCreated;
+    private Long length;
+    //private String framerate;
+    //private String frameHeight;
+    //private String frameWidth;
 
     private byte[] multimediaFileChunk; //The chunk of data that is going to be sent from the Publisher -> Broker -> Consumer.
 
@@ -23,7 +23,7 @@ public class MultimediaFile implements Serializable{
 
     //public MultimediaFile(String multimediaFileName, String profileName, String dateCreated,
                           //String length, String framerate, String frameHeight, String frameWidth, byte[] multimediaFileChunk) {
-    public MultimediaFile(String multimediaFileName, String profileName, String s, String s1, byte[] multimediaFileChunk){
+    public MultimediaFile(String multimediaFileName, String profileName, long length, byte[] multimediaFileChunk){
         if(multimediaFileName != null) {
             this.multimediaFileName = multimediaFileName;
         }else {
@@ -36,17 +36,22 @@ public class MultimediaFile implements Serializable{
             this.profileName = "";
         }
 
+        if(length != 0 ) {
+            this.length = length;
+        }else {
+            this.length = Long.valueOf(0);
+        }
+
+
+
+/*
         if(dateCreated != null) {
             this.dateCreated = dateCreated;
         }else {
             this.dateCreated = "";
         }
 
-        if(length != null) {
-            this.length = length;
-        }else {
-            this.length = "";
-        }
+
 
         if(framerate != null) {
             this.framerate = framerate;
@@ -67,7 +72,7 @@ public class MultimediaFile implements Serializable{
         }
 
         this.multimediaFileChunk = multimediaFileChunk;
-
+*/
     }
 
     //Setters and getters of this class.
@@ -80,12 +85,35 @@ public class MultimediaFile implements Serializable{
         this.profileName = profileName;
     }
 
-    public void setDateCreated(String dateCreated){
-        this.dateCreated = dateCreated;
+    public void setLength(Long length){
+        this.length = length;
     }
 
-    public void setLength(String length){
-        this.length = length;
+    public void setMultimediaFileChunk(byte[] multimediaFileChunk){
+        this.multimediaFileChunk = multimediaFileChunk;
+    }
+
+    public byte[] getMultimediaFileChunk(){
+        return this.multimediaFileChunk;
+    }
+
+    public String getProfileName(){
+        return this.profileName;
+    }
+    public Long getLength(){
+        return this.length;
+    }
+
+    public String getMultimediaFileName(){
+        return this.multimediaFileName;
+    }
+
+
+
+
+/*
+    public void setDateCreated(String dateCreated){
+        this.dateCreated = dateCreated;
     }
 
     public void setFramerate(String framerate){
@@ -100,24 +128,9 @@ public class MultimediaFile implements Serializable{
         this.frameWidth = frameWidth;
     }
 
-    public void setMultimediaFileChunk(byte[] multimediaFileChunk){
-        this.multimediaFileChunk = multimediaFileChunk;
-    }
-
-    public String getMultimediaFileName(){
-        return this.multimediaFileName;
-    }
-
-    public String getProfileName(){
-        return this.profileName;
-    }
 
     public String getDateCreated(){
         return this.dateCreated;
-    }
-
-    public String getLength(){
-        return this.length;
     }
 
     public String getFramerate(){
@@ -131,8 +144,7 @@ public class MultimediaFile implements Serializable{
     public String getFrameWidth(){
         return this.frameWidth;
     }
+*/
 
-    public byte[] getMultimediaFileChunk(){
-        return this.multimediaFileChunk;
-    }
+
 }

@@ -14,8 +14,8 @@ public class UserNode implements Node{
     //private BufferedWriter writer;
     //private BufferedReader out;
 
-    private ObjectInputStream input;
-    private ObjectOutputStream output;
+    private static ObjectInputStream input;
+    private static ObjectOutputStream output;
 
     // private ObjectInputStream inB;
     private static int port;
@@ -26,7 +26,9 @@ public class UserNode implements Node{
         this.profileName = profileName;
     }
 
-
+    public Socket getSocket() {
+        return this.requestSocket;
+    }
 
 
     public static void main(String[] args) throws IOException{
@@ -40,15 +42,17 @@ public class UserNode implements Node{
         user.connect();  //Συνδεση του UserNode με εναν τυχαίο Broker
         //System.out.println("mpika  ston broker");
 
-        port = user.init(getSocket().getPort());
+        port = user.init(port);
 
         //
         // System.out.println(port);
-        Thread consumer = new Consumer(getSocket(),topic,profileName);
-        consumer.start();
+        //Thread consumer = new Consumer(getSocket(),topic,profileName);
+        //consumer.start();
 
-        Thread publisher = new Publisher(getSocket(),topic,profileName);
+        Thread publisher = new Publisher(requestSocket,topic,profileName , output , input );
         publisher.start();
+
+
 
         System.out.println("Bye!");
     }
@@ -237,7 +241,4 @@ public class UserNode implements Node{
 
 
 
-    public static Socket getSocket() {
-        return requestSocket;
-    }
 }

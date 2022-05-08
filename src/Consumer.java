@@ -26,6 +26,7 @@ public class Consumer extends Thread {
             this.topic = topic;
             System.out.println("Got a connection Consumer - Broker ...Opening streams....");
 
+            //System.out.println(topic + " " + profileName);    //it's ok
 
             out = new ObjectOutputStream(connection.getOutputStream());
             in = new ObjectInputStream(connection.getInputStream());
@@ -55,6 +56,7 @@ public class Consumer extends Thread {
     public void run() {
         try {
 
+            //System.out.println("Run");
 
             // Dinoume to Connection Type ston broker
             out.writeObject(new SocketMessage("CONSUMER_CONNECTION",new SocketMessageContent(topic)));
