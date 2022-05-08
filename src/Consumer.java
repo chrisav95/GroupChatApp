@@ -74,10 +74,10 @@ public class Consumer extends Thread {
 
 
             // History Reading First Time Only
-            if (reply.getType() == "USER_TOPIC_FULL_HISTORY") {
+            if (reply.getType().equals("USER_TOPIC_FULL_HISTORY")) {
 
                 while (!reply.getContent().getMessage().isEmpty()){
-                    if (reply.getType() == "USER_TOPIC_CHUNK") {
+                    if (reply.getType().equals("USER_TOPIC_CHUNK")) {
                         reply = (SocketMessage) in.readObject();
                         System.out.println(reply.getContent().getMessage());
                     }
@@ -90,14 +90,14 @@ public class Consumer extends Thread {
             while(true) {
                 // Listen for broker messages.
 
-                if (reply.getType() == "USER_MULTIMEDIA_CHUNK") {
+                if (reply.getType().equals("USER_MULTIMEDIA_CHUNK")) {
                     // Get info from the message.
                     //Broker send the path of the file
                     //Notify User
                     System.out.println("File sending " + reply.getContent().getMessage());
                 }
 
-                if(reply.getType() == "USER_MESSAGE"){
+                if(reply.getType().equals("USER_MESSAGE")){
                     System.out.println(reply.getContent().getMessage());
                     //edw tha pairnw apo ton broker ta mnmt pou stelnei o publisher ston broker
                 }

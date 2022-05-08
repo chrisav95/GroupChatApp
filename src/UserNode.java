@@ -72,7 +72,7 @@ public class UserNode implements Node{
             /**
              * The topic list from broker
              */
-            if (reply.getType() == "TOPIC_LIST") {
+            if (reply.getType().equals("TOPIC_LIST")) {
                 System.out.print(reply.getContent().getMessage());
             }
 
@@ -99,7 +99,6 @@ public class UserNode implements Node{
                 System.out.println(reply.getType());
 
 
-
                 if (topic.equals("quit")) { //Terminal message
                     initializeQuery.println(topic); //Sends terminal message to Broker so that he can disconnect and terminate the Thread
                     disconnect(); //Disconnecting from the Broker
@@ -109,7 +108,7 @@ public class UserNode implements Node{
                 /**
                  * The topic we're interested in does not exists.
                  */
-                if (reply.getType() == "USER_TOPIC_DOES_NOT_EXIST"){
+                if (reply.getType().equals("USER_TOPIC_DOES_NOT_EXIST")){
                     // Pick a different topic and ask the broker again.
                     System.out.println("Topic does not exist ! Type the name of an available group-chat/topic (type 'quit' to disconnect): ");
 
@@ -117,7 +116,7 @@ public class UserNode implements Node{
                 /**
                  * The topic we're interested in is managed by a different broker.
                  */
-                else if (reply.getType() == "USER_TOPIC_LOOKUP_REDIRECT"){
+                else if (reply.getType().equals("USER_TOPIC_LOOKUP_REDIRECT")){
                     // Get host and port for the correct broker.
                     System.out.println("Redirecting to the right broker.");
                     disconnect();
@@ -128,7 +127,7 @@ public class UserNode implements Node{
                 /**
                  * We're already connected to the correct broker.
                  */
-                else if (reply.getType() == "USER_TOPIC_LOOKUP_SUCCESS"){
+                else if (reply.getType().equals("USER_TOPIC_LOOKUP_SUCCESS")){
                     return port;
                 }
 

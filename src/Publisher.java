@@ -56,7 +56,7 @@ public class Publisher extends Thread {
             MultimediaFile m = null;
             Value v = null;
 
-            if (reply.getType() == "BROKER_CONNECTED") {
+            if (reply.getType().equals("BROKER_CONNECTED")){
                 while(true){
                     message = keyboard.readLine().trim();
                     if (message.startsWith("video") | message.startsWith("photo") | message.startsWith("txt"))   {

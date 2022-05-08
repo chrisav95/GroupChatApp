@@ -104,7 +104,7 @@ public class Broker implements Node{
         System.out.println("[BROKER] "+ getBrokerId() + " Initializing data.");
 
         while(true) {       //Accepting UserNode queries.
-            System.out.println("[BROKER] Waiting for userNode connection.");
+            System.out.println("[BROKER] Waiting for UserNode connection.");
             Socket user = providerSocket.accept();
             System.out.println("[BROKER] Connected to a UserNode!");
 
@@ -150,11 +150,12 @@ public class Broker implements Node{
                 //UserNode establishes whether he is in communication with a User, Publisher or a Consumer
                 SocketMessage response = (SocketMessage) inP.readObject();
                 connectionType = response.getType();
+                System.out.println(connectionType + " " + response.getContent().getMessage());
 
                 /**
                  * Communication with a User
                  */
-                if (connectionType == "USER_CONNECTION") {
+                if (connectionType.equals("USER_CONNECTION")){
                     for (String t : topics) {
                         message = message + t + ":"; //Sends to user the available topic list.
                     }
@@ -163,11 +164,11 @@ public class Broker implements Node{
                     response = (SocketMessage) inP.readObject(); //User's chosen topic
 
                     //If user requests for a topic
-                    if (response.getType() == "USER_TOPIC_LOOKUP") {
+                    if (response.getType().equals("USER_TOPIC_LOOKUP")){
                         //Checking if the requested topic is a legit topic
                         while(!legitTopic){
                             for (String t : topics){
-                                if(response.getContent().getMessage() == t){
+                                if(response.getContent().getMessage().equals(t)){
                                     legitTopic = true;
                                     currentTopic = response.getContent().getMessage();
                                     //EDW READER TOU TXT KAI ADD STO TOPIC.HISTORY TOU HASHMAP
@@ -185,7 +186,7 @@ public class Broker implements Node{
                         //Checking if the current Broker is responsible for the requested topic.
                         for (Broker b : brokers) {
                             for (String t : myTopics.keySet()) {
-                                if (currentTopic == t) {
+                                if (currentTopic.equals(t) ){
                                     rightPort = b.port;
                                 }
                             }
@@ -214,7 +215,7 @@ public class Broker implements Node{
                 /**
                  * Communication with a Publisher
                  */
-                else if (connectionType == "PUBLISHER_CONNECTION"){
+                else if (connectionType.equals("PUBLISHER_CONNECTION")){
                     profileName = response.getContent().getMessage();
 
                     message = "Connected to " +currentTopic+ " Waiting for message!";
@@ -231,7 +232,7 @@ public class Broker implements Node{
                 /**
                  * Communication with a Consumer
                  */
-                else if (connectionType == "CONSUMER_CONNECTION") {
+                else if (connectionType.equals("CONSUMER_CONNECTION")) {
                     //SENDING ALL CONTENTS OF HASHMAP
                     message = "";
                     outC.writeObject(new SocketMessage("USER_TOPIC_FULL_HISTORY", new SocketMessageContent(message)));
